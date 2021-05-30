@@ -8,8 +8,10 @@ namespace TestConsole
     {
         static async Task Main(string[] args)
         {
-            var res = await MultitaskQueue.TaskManager<string>.Instance.Run(DoSomething, new CancellationTokenSource(TimeSpan.FromSeconds(2)).Token);
-            Console.WriteLine(res);
+            var res = MultitaskQueue.TaskManager<string>.Instance.Run(DoSomething, new CancellationTokenSource(TimeSpan.FromSeconds(2)).Token);
+            var res1 = MultitaskQueue.TaskManager<string>.Instance.Run(DoSomething, new CancellationTokenSource(TimeSpan.FromSeconds(2)).Token);
+            res.ContinueWith(ret => Console.WriteLine(ret));
+            res1.ContinueWith(ret => Console.WriteLine(ret));
             Console.ReadKey();
         }
         static string DoSomething()

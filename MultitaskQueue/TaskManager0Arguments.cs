@@ -9,7 +9,7 @@ namespace MultitaskQueue
     {
         private static readonly Lazy<TaskManager<TResult>> _taskManagerLazy = new Lazy<TaskManager<TResult>>(() => new TaskManager<TResult>());
 
-        private int _maximumTaskRunning = 3;
+        private int _maximumTaskRunning = Environment.ProcessorCount;
 
         private TaskManager() => _taskAdded.OnChange += TaskAdded_OnChange;
 
