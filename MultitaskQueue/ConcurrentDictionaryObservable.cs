@@ -8,7 +8,7 @@ namespace MultitaskQueue
 {
     public class ConcurrentDictionaryObservable<T, K>: ConcurrentDictionary<T, K>
     {
-        public event Action<object, ObservableAction> OnChange;
+        public event Func<object, ObservableAction, Task> OnChange;
         public new bool TryAdd(T key, K value)
         {
             var isAdded = base.TryAdd(key, value);

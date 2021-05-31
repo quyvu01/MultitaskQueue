@@ -15,7 +15,7 @@ namespace MultitaskQueue
 
         ~TaskManager() => _taskAdded.OnChange -= TaskAdded_OnChange;
 
-        private void TaskAdded_OnChange(object sender, ObservableAction action) => RunChecking();
+        private Task TaskAdded_OnChange(object sender, ObservableAction action) => Task.Run(() => RunChecking());
 
         public int MaximumTaskRunning { get => _maximumTaskRunning; set { _maximumTaskRunning = value <= 0 ? 1 : value; } }
 
@@ -28,9 +28,16 @@ namespace MultitaskQueue
 
         public int RunningTasks => _taskRunning.Count;
 
-        public async Task<TResult> Run(Func<TResult> function, CancellationToken cancellation = default)
+        public async Task<TResult> Run(Func<TResult> function)
         {
-            var taskArgs = new TaskArgs { Function = function, CancellationToken = cancellation };
+            var taskArgs = new TaskArgs { Function = function };
+            _taskAdded.TryAdd(taskArgs.Id, taskArgs);
+            return await taskArgs.TaskSource.Task;
+        }
+
+        public async Task<TResult> RunAsync(Func<Task<TResult>> function)
+        {
+            var taskArgs = new TaskArgs { FunctionAsync = function };
             _taskAdded.TryAdd(taskArgs.Id, taskArgs);
             return await taskArgs.TaskSource.Task;
         }
@@ -40,37 +47,29 @@ namespace MultitaskQueue
             var taskNeedToRun = _taskAdded.OrderBy(p => p.Value.CreatedTime).Take(MaximumTaskRunning);
             foreach (var task in taskNeedToRun)
             {
-                if (_taskRunning.ContainsKey(task.Key)) return;
+                if (_taskRunning.ContainsKey(task.Key)) continue;
                 _taskRunning.TryAdd(task.Key, task.Value);
-                task.Value.CancellationToken.ThrowIfCancellationRequested();
-                Task.Run(() =>
+                Task.Run(async () =>
                 {
                     TResult result = default;
                     try
                     {
                         task.Value.State = State.Running;
-                        result = task.Value.Function.Invoke();
-                        return result;
+                        if (task.Value.Function != null)
+                            result = task.Value.Function.Invoke();
+                        if (task.Value.FunctionAsync != null)
+                            result = await task.Value.FunctionAsync.Invoke();
+                        task.Value.TaskSource.TrySetResult(result);
                     }
                     catch (Exception ex)
                     {
                         task.Value.Exception = ex;
-                        return result;
+                        task.Value.TaskSource.TrySetException(ex);
                     }
                     finally
                     {
                         _taskAdded.TryRemove(task.Key, out _);
                         _taskRunning.TryRemove(task.Key, out _);
-                    }
-                }, task.Value.CancellationToken).ContinueWith(result =>
-                {
-                    try
-                    {
-                        task.Value.TaskSource.TrySetResult(result.Result);
-                    }
-                    catch (Exception)
-                    {
-                        task.Value.TaskSource.TrySetCanceled();
                     }
                 });
             }
@@ -79,13 +78,12 @@ namespace MultitaskQueue
         private class TaskArgs
         {
             public Func<TResult> Function { get; set; }
+            public Func<Task<TResult>> FunctionAsync { get; set; }
             public Guid Id { get; set; } = Guid.NewGuid();
             public Exception Exception { get; set; }
             public State State { get; set; } = State.NotStarted;
             public TaskCompletionSource<TResult> TaskSource { get; set; } = new TaskCompletionSource<TResult>();
             public DateTime CreatedTime { get; } = DateTime.Now;
-
-            public CancellationToken CancellationToken { get; set; }
         }
     }
 }

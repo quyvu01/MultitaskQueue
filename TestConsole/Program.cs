@@ -1,22 +1,23 @@
 ﻿using System;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace TestConsole
 {
-    class Program
+    internal class Program
     {
-        static async Task Main(string[] args)
+        private static void Main(string[] args)
         {
-            var res = MultitaskQueue.TaskManager<string>.Instance.Run(DoSomething, new CancellationTokenSource(TimeSpan.FromSeconds(2)).Token);
-            var res1 = MultitaskQueue.TaskManager<string>.Instance.Run(DoSomething, new CancellationTokenSource(TimeSpan.FromSeconds(2)).Token);
-            res.ContinueWith(ret => Console.WriteLine(ret));
-            res1.ContinueWith(ret => Console.WriteLine(ret));
+            var res = MultitaskQueue.TaskManager<string>.Instance.Run(DoSomething);
+            var res1 = MultitaskQueue.TaskManager<string>.Instance.Run(DoSomething);
+            _ = res.ContinueWith(ret => Console.WriteLine(ret.Result));
+            _ = res1.ContinueWith(ret => Console.WriteLine(ret.Result));
             Console.ReadKey();
         }
-        static string DoSomething()
+
+        private static string DoSomething()
         {
-            Thread.Sleep(4000);
+            Thread.Sleep(3000);
+            throw new Exception("hahaha");
             return "Hello World";
         }
     }
