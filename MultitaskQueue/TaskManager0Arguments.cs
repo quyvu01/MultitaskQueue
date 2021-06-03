@@ -28,7 +28,7 @@ namespace MultitaskQueue
 
         public int RunningTasks => _taskRunning.Count;
 
-        public async Task<TResult> Run(Func<TResult> function)
+        public async Task<TResult> RunAsync(Func<TResult> function)
         {
             var taskArgs = new TaskArgs { Function = function };
             _taskAdded.TryAdd(taskArgs.Id, taskArgs);

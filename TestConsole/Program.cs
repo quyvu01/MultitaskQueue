@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Threading;
+using System.Threading.Tasks;
 
 namespace TestConsole
 {
@@ -7,18 +7,22 @@ namespace TestConsole
     {
         private static void Main(string[] args)
         {
-            var res = MultitaskQueue.TaskManager<string>.Instance.Run(DoSomething);
-            var res1 = MultitaskQueue.TaskManager<string>.Instance.Run(DoSomething);
+            var res = MultitaskQueue.TaskManager<Person>.Instance.RunAsync(DoSomethingAsync);
+            var res1 = MultitaskQueue.TaskManager<Person>.Instance.RunAsync(DoSomethingAsync);
             _ = res.ContinueWith(ret => Console.WriteLine(ret.Result));
             _ = res1.ContinueWith(ret => Console.WriteLine(ret.Result));
             Console.ReadKey();
         }
 
-        private static string DoSomething()
+        private static async Task<Person> DoSomethingAsync()
         {
-            Thread.Sleep(3000);
-            throw new Exception("hahaha");
-            return "Hello World";
+            await Task.Delay(3000);
+            return new Person { Name = "Quy" };
         }
+    }
+
+    public class Person
+    {
+        public string Name { get; set; }
     }
 }
