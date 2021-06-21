@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace TestConsole
@@ -7,18 +8,19 @@ namespace TestConsole
     {
         private static void Main(string[] args)
         {
-            var res = MultitaskQueue.TaskManager<Person>.Instance.RunAsync(DoSomethingAsync);
-            var res1 = MultitaskQueue.TaskManager<Person>.Instance.RunAsync(DoSomethingAsync);
+            var res = MultitaskQueue.TaskManager<int>.Instance.RunAsync(DoSomethingAsync, message => Console.WriteLine(message));
+            var res1 = MultitaskQueue.TaskManager<int>.Instance.RunAsync(DoSomethingAsync, message => Console.WriteLine(message));
             _ = res.ContinueWith(ret => Console.WriteLine(ret.Result));
             _ = res1.ContinueWith(ret => Console.WriteLine(ret.Result));
             Console.ReadKey();
         }
 
-        private static async Task<Person> DoSomethingAsync()
+        private static readonly Func<Task<int>> DoSomethingAsync = async () =>
         {
-            await Task.Delay(3000);
-            return new Person { Name = "Quy" };
-        }
+            var rd = new Random().Next(1000, 3000);
+            await Task.Delay(rd);
+            return rd;
+        };
     }
 
     public class Person
