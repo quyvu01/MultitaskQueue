@@ -12,7 +12,7 @@ namespace MultitaskQueue
 
         private int _maximumTaskRunning = Environment.ProcessorCount;
 
-        private readonly Semaphore queueManager;
+        private Semaphore queueManager;
 
         private TaskManager() => queueManager = new Semaphore(MaximumTaskRunning, MaximumTaskRunning);
 
@@ -23,6 +23,7 @@ namespace MultitaskQueue
             {
                 if (_isRunAnyFunction) throw new Exception("Can not set MaximumTaskRunning when any method is started");
                 _maximumTaskRunning = value <= 0 ? 1 : value;
+                queueManager = new Semaphore(_maximumTaskRunning, _maximumTaskRunning);
             }
         }
 
