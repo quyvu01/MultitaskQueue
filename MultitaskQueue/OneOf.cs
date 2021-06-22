@@ -10,6 +10,17 @@ namespace MultitaskQueue
 
         private OneOf(int index, T0 val0 = default, T1 val1 = default) => (_index, _value0, _value1) = (index, val0, val1);
 
+        public bool IsT0 => _index == 0;
+
+        public bool IsT1 => _index == 1;
+
+        public object Value => _index switch
+        {
+            0 => _value0,
+            1 => _value1,
+            _ => throw new Exception("Invaild Index"),
+        };
+
         public static implicit operator OneOf<T0, T1>(T0 val0) => new OneOf<T0, T1>(0, val0: val0);
 
         public static implicit operator OneOf<T0, T1>(T1 val1) => new OneOf<T0, T1>(1, val1: val1);

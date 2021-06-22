@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,6 +13,11 @@ namespace TestConsole
             var res1 = MultitaskQueue.TaskManager<int>.Instance.RunAsync(DoSomethingAsync, message => Console.WriteLine(message));
             _ = res.ContinueWith(ret => Console.WriteLine(ret.Result));
             _ = res1.ContinueWith(ret => Console.WriteLine(ret.Result));
+            MultitaskQueue.TaskUtilities.ParallelForEachAsync(Enumerable.Range(0, 10), 3, async val => await Task.Run(() =>
+            {
+                Thread.Sleep(1000);
+                Console.WriteLine(val);
+            }));
             Console.ReadKey();
         }
 

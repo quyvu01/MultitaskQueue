@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -17,6 +19,20 @@ namespace MultitaskQueue
             var anyTask = await Task.WhenAny(task, Task.Delay(timeout));
             if (anyTask != task) return await doIfTimeout.Invoke();
             return task.Result;
+        }
+        public static Task ParallelForEachAsync<T>(IEnumerable<T> source, int degreeOfParallelization, Func<T, Task> body)
+        {
+            async Task AwaitPartition(IEnumerator<T> partition)
+            {
+                using (partition)
+                {
+                    while (partition.MoveNext())
+                    {
+                        await body(partition.Current);
+                    }
+                }
+            }
+            return Task.WhenAll(Partitioner.Create(source).GetPartitions(degreeOfParallelization).AsParallel().Select(t => AwaitPartition(t)));
         }
     }
 }
