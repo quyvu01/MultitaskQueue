@@ -2,7 +2,7 @@
 
 namespace MultitaskQueue
 {
-    public struct OneOf<T0, T1>
+    public readonly struct OneOf<T0, T1>
     {
         private readonly int _index;
         private readonly T0 _value0;
@@ -18,7 +18,7 @@ namespace MultitaskQueue
         {
             0 => _value0,
             1 => _value1,
-            _ => throw new Exception("Invaild Index"),
+            _ => throw new Exception("Invalid Index"),
         };
 
         public static implicit operator OneOf<T0, T1>(T0 val0) => new OneOf<T0, T1>(0, val0: val0);
@@ -27,20 +27,30 @@ namespace MultitaskQueue
 
         public TResult Match<TResult>(Func<T0, TResult> func0, Func<T1, TResult> func1)
         {
-            if (func0 == null || func1 == null) throw new ArgumentNullException("Function0 or Function1 can not be null");
+            if (func0 == null || func1 == null)
+                throw new ArgumentNullException("Any function can not be null");
             return _index switch
             {
                 0 => func0.Invoke(_value0),
                 1 => func1.Invoke(_value1),
-                _ => throw new Exception("Invaild Index"),
+                _ => throw new Exception("Invalid Index"),
             };
         }
         public void Switch(Action<T0> action0, Action<T1> action1)
         {
-            if (action0 == null || action0 == null) throw new ArgumentNullException("Action0 or Action1 can not be null");
-            if (_index == 0) action0.Invoke(_value0);
-            else if (_index == 1) action1.Invoke(_value1);
-            else throw new Exception("Invaild Index");
+            if (action0 == null || action1 == null)
+                throw new ArgumentNullException("Any function can not be null");
+            switch (_index)
+            {
+                case 0:
+                    action0.Invoke(_value0);
+                    break;
+                case 1:
+                    action1.Invoke(_value1);
+                    break;
+                default:
+                    throw new Exception("Invalid Index");
+            }
         }
     }
 }

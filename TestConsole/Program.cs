@@ -9,6 +9,7 @@ namespace TestConsole
     {
         private static void Main(string[] args)
         {
+            MultitaskQueue.TaskManager<int>.Instance.MaximumTaskRunning = Environment.ProcessorCount;
             var res = MultitaskQueue.TaskManager<int>.Instance.RunAsync(DoSomethingAsync, message => Console.WriteLine(message));
             var res1 = MultitaskQueue.TaskManager<int>.Instance.RunAsync(DoSomethingAsync, message => Console.WriteLine(message));
             _ = res.ContinueWith(ret => Console.WriteLine(ret.Result));

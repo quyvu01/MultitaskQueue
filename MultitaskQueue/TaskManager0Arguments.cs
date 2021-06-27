@@ -8,13 +8,13 @@ namespace MultitaskQueue
     {
         private bool _isRunAnyFunction = false;
 
-        private static readonly Lazy<TaskManager<TResult>> _taskManagerLazy = new Lazy<TaskManager<TResult>>(() => new TaskManager<TResult>());
+        private static readonly Lazy<TaskManager<TResult>> TaskManagerLazy = new Lazy<TaskManager<TResult>>(() => new TaskManager<TResult>());
 
         private int _maximumTaskRunning = Environment.ProcessorCount;
 
-        private Semaphore queueManager;
+        private Semaphore _queueManager;
 
-        private TaskManager() => queueManager = new Semaphore(MaximumTaskRunning, MaximumTaskRunning);
+        private TaskManager() => _queueManager = new Semaphore(MaximumTaskRunning, MaximumTaskRunning);
 
         public int MaximumTaskRunning
         {
@@ -23,21 +23,21 @@ namespace MultitaskQueue
             {
                 if (_isRunAnyFunction) throw new Exception("Can not set MaximumTaskRunning when any method is started");
                 _maximumTaskRunning = value <= 0 ? 1 : value;
-                queueManager = new Semaphore(_maximumTaskRunning, _maximumTaskRunning);
+                _queueManager = new Semaphore(_maximumTaskRunning, _maximumTaskRunning);
             }
         }
 
-        public static TaskManager<TResult> Instance => _taskManagerLazy.Value;
+        public static TaskManager<TResult> Instance => TaskManagerLazy.Value;
 
         public Task<TResult> RunAsync(OneOf<Func<TResult>, Func<Task<TResult>>> oneOfFunc, Action<string> exceptionCallback = null)
         {
             _isRunAnyFunction = true;
             return Task.Run(async () =>
             {
-                queueManager.WaitOne();
+                _queueManager.WaitOne();
                 try
                 {
-                    return await oneOfFunc.Match(func => Task.Run(() => func.Invoke()), funcTask => funcTask.Invoke());
+                    return await oneOfFunc.Match(func => Task.Run(func.Invoke), funcTask => funcTask.Invoke());
                 }
                 catch (Exception ex)
                 {
@@ -55,7 +55,7 @@ namespace MultitaskQueue
         {
             try
             {
-                queueManager.Release();
+                _queueManager.Release();
             }
             catch (Exception)
             {
