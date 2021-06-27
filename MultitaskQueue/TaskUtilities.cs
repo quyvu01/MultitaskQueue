@@ -9,13 +9,15 @@ namespace MultitaskQueue
 {
     public class TaskUtilities
     {
-        public static async Task DoWithTimeout(Task task, int timeout, Func<Task> doIfTimeout = null)
+        public static async Task DoWithTimeout(Task task, int timeout, Func<Task> doIfTimeout)
         {
+            if (doIfTimeout == null) throw new ArgumentNullException("DoIfTimeout function can not be null!");
             var anyTask = await Task.WhenAny(task, Task.Delay(timeout));
             if (anyTask != task) await doIfTimeout?.Invoke();
         }
         public static async Task<TResult> DoWithTimeout<TResult>(Task<TResult> task, int timeout, Func<Task<TResult>> doIfTimeout)
         {
+            if (doIfTimeout == null) throw new ArgumentNullException("DoIfTimeout function can not be null!");
             var anyTask = await Task.WhenAny(task, Task.Delay(timeout));
             if (anyTask != task) return await doIfTimeout.Invoke();
             return task.Result;

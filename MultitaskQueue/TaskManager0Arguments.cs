@@ -29,7 +29,7 @@ namespace MultitaskQueue
 
         public static TaskManager<TResult> Instance => _taskManagerLazy.Value;
 
-        public Task<TResult> RunAsync(OneOf<Func<TResult>, Func<Task<TResult>>> oneOfFunc, Action<string> exeptionCallback = null)
+        public Task<TResult> RunAsync(OneOf<Func<TResult>, Func<Task<TResult>>> oneOfFunc, Action<string> exceptionCallback = null)
         {
             _isRunAnyFunction = true;
             return Task.Run(async () =>
@@ -41,7 +41,7 @@ namespace MultitaskQueue
                 }
                 catch (Exception ex)
                 {
-                    exeptionCallback?.Invoke(ex.Message);
+                    exceptionCallback?.Invoke(ex.Message);
                     return default;
                 }
                 finally
