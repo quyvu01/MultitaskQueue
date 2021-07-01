@@ -12,9 +12,9 @@ namespace MultitaskQueue
 
         private int _maximumTaskRunning = Environment.ProcessorCount;
 
-        private Semaphore _queueManager;
+        private SemaphoreSlim _queueManager;
 
-        private TaskManager() => _queueManager = new Semaphore(MaximumTaskRunning, MaximumTaskRunning);
+        private TaskManager() => _queueManager = new SemaphoreSlim(MaximumTaskRunning);
 
         public int MaximumTaskRunning
         {
@@ -23,7 +23,7 @@ namespace MultitaskQueue
             {
                 if (_isRunAnyFunction) throw new Exception("Can not set MaximumTaskRunning when any method is started");
                 _maximumTaskRunning = value <= 0 ? 1 : value;
-                _queueManager = new Semaphore(_maximumTaskRunning, _maximumTaskRunning);
+                _queueManager = new SemaphoreSlim(MaximumTaskRunning);
             }
         }
 
@@ -34,7 +34,7 @@ namespace MultitaskQueue
             _isRunAnyFunction = true;
             return Task.Run(async () =>
             {
-                _queueManager.WaitOne();
+                await _queueManager.WaitAsync();
                 try
                 {
                     return await oneOfFunc.Match(func => Task.Run(func.Invoke), funcTask => funcTask.Invoke());
